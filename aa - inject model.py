@@ -30,13 +30,13 @@ if __name__ == "__main__":
         print ('Error: Source and target files are identical!  Press any key to quit.')
         input()
         raise SystemExit()
-    if not sourcefile.split('_')[2][0] == targetfile.split('_')[2][0]:
+    if not sourcefile.split('_')[-1][0] == targetfile.split('_')[-1][0]:
         print ('Error: Source and target files are not compatible types!  Press any key to quit.')
         input()
         raise SystemExit()
 
     # Generate the search and substitution strings to inject into the target model
-    if sourcefile.split('_')[2][0] == 'C':
+    if sourcefile.split('_')[-1][0] == 'C':
         source_string = sourcefile
         target_string = targetfile
     else:
