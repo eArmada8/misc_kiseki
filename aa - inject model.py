@@ -1,4 +1,5 @@
-# Short script to inject one model in Hajimari no Kiseki into another.  If a source backup exists, it will use the backup instead of the existing file.  If no target backup exists, it will create one before erasing the target.
+# Short script to inject one model in Hajimari no Kiseki into another.  If a source backup exists, it will use the backup
+# instead of the existing file.  If no target backup exists, it will create one before erasing the target.
 # GitHub eArmada8/misc_kiseki
 
 import os, shutil
