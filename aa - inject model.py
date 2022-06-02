@@ -1,9 +1,9 @@
 # Short script to inject one model in Hajimari no Kiseki into another.  If a source backup exists, it will use the backup
 # instead of the existing file.  If no target backup exists, it will create one before erasing the target.
-# Commandline: "aa - inject model.py" SOURCE_MODEL.pkg TARGET_MODEL.pkg
 # GitHub eArmada8/misc_kiseki
 
-import sys, os, shutil
+import sys, os, shutil, struct
+from unpackpkg import uncompress_lz4 # Needed for CS3 / CS4 due to XML compression
 
 if __name__ == "__main__":
     # Set current directory
@@ -74,7 +74,17 @@ if __name__ == "__main__":
     # Read source model into memory
     with open(file_to_inject, 'rb') as f:
         source_file_data = f.read()
-    patched_file_data = bytearray(source_file_data)
+        #Grab the XML file separately while the file is open
+        f.seek(8)
+        file_entry_name, file_entry_uncompressed_size, file_entry_compressed_size, file_entry_offset, file_entry_flags = struct.unpack("<64sIIII", f.read(64+4+4+4+4))
+        xml_file_info_from_header = [file_entry_offset, file_entry_compressed_size, file_entry_uncompressed_size, file_entry_flags]
+        file_entry_name, file_entry_uncompressed_size, file_entry_compressed_size, file_entry_offset, file_entry_flags = struct.unpack("<64sIIII", f.read(64+4+4+4+4))
+        first_file_after_xml_info_from_header = [file_entry_offset, file_entry_compressed_size, file_entry_uncompressed_size, file_entry_flags] #Also grab info for file 2, for chunking the buffer
+        f.seek(xml_file_info_from_header[0])
+        xml_file = None
+        if xml_file_info_from_header[3] & 4:
+            xml_file = uncompress_lz4(f, xml_file_info_from_header[2], xml_file_info_from_header[1])
+        patched_file_data = bytearray(source_file_data)
     
     # Determine XML compression type
     xml_compression_type = int.from_bytes(source_file_data[84:88], "little")
@@ -126,11 +136,49 @@ if __name__ == "__main__":
             patched_file_data[72+intbyte] = new_xml_size_bytes[intbyte]
             patched_file_data[76+intbyte] = new_xml_size_bytes[intbyte]
 
-    # Code is not yet compatible with changing file name length in compressed XML, this is a placeholder for future code
+    # If the filenames are of different length and the original XML file is compressed, the XML file will need to be replaced.
     if not len(target_string) == len(source_string) and not xml_compression_type == 0:
-        print ('Error: Source and target files are not compatible due to XML compression!  Press any key to quit.')
-        input()
-        raise SystemExit()
+        # Generate the search and substitution strings to inject into the target model
+        if sourcefile.split('_')[-1][0] == 'C':
+            source_string = '<asset symbol="' + sourcefile + '">'
+            target_string = '<asset symbol="' + targetfile + '">'
+        else:
+            source_string = '<asset symbol="' + sourcefile.split('_')[0] + '_' + sourcefile.split('_')[1] + '">'
+            target_string = '<asset symbol="' + targetfile.split('_')[0] + '_' + targetfile.split('_')[1] + '">'
+
+        # Patch uncompressed XML file with substitution string
+        xml_file = bytearray(xml_file.replace(bytes(source_string, 'ascii'),bytes(target_string, 'ascii')))
+
+        # Calculate offset difference for files beyond the XML file
+        offset_difference = len(xml_file) - xml_file_info_from_header[1]
+
+        # Split the .pkg file into header, {XML - not needed}, and file archive.
+        patched_header = patched_file_data[0:xml_file_info_from_header[0]]
+        patched_file_archive = patched_file_data[first_file_after_xml_info_from_header[0]:]
+
+        # Patch the header with all new offsets and new XML file size and compression
+        total_offsets = patched_header[4]
+        file_offsets = []
+        # Read in all the current file offsets
+        for offset in range(total_offsets):
+            offset_location = (offset+1)*80
+            file_offsets.append(int.from_bytes(patched_header[offset_location:offset_location+4], "little"))
+        # Calculate all the new file offsets
+        new_file_offsets = [i + offset_difference for i in file_offsets]
+        new_file_offsets[0] = file_offsets[0] # The first offset doesn't actually change
+        # Set the new file offsets into the patched file data
+        for offset in range(total_offsets):
+            offset_location = (offset+1)*80
+            offset_bytes = new_file_offsets[offset].to_bytes(4, 'little')
+            for intbyte in range(4):
+                patched_header[offset_location+intbyte] = offset_bytes[intbyte]
+        # Calculate and set the new XML file size
+        patched_header[72:76] = len(xml_file).to_bytes(4, 'little') # Uncompressed size
+        patched_header[76:80] = len(xml_file).to_bytes(4, 'little') # Compressed size (no longer compressed)
+        patched_header[84:88] = (0).to_bytes(4, 'little') # Set compression flag to 0
+
+        #Reassemble the .pkg file
+        patched_file_data = patched_header + xml_file + patched_file_archive
 
     # Write patched model into target
     with open(targetfile + '.pkg', 'wb') as f:
