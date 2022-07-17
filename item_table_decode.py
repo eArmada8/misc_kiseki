@@ -1,4 +1,5 @@
-# Character table decoder - will decode t_name.tbl in the current folder and output table.csv
+# Item table decoder - will decode t_item.tbl (or t_item_en.tbl if you change line 12)
+# in the current folder and output item_table.csv as well as a lua array for cheat engine.
 # GitHub eArmada8/misc_kiseki
 
 import os, struct, csv
