@@ -1,9 +1,9 @@
-# Short script to inject one model in Hajimari no Kiseki into another.  If a source backup exists, it will use the backup
+# Short script to inject one model into another in Falcom games.  If a source backup exists, it will use the backup
 # instead of the existing file.  If no target backup exists, it will create one before erasing the target.
 # GitHub eArmada8/misc_kiseki
 
 import sys, os, shutil, struct
-from unpackpkg import uncompress_lz4 # Needed for CS3 / CS4 due to XML compression
+from unpackpkg import * # Needed for games that compress the XML file
 
 if __name__ == "__main__":
     # Set current directory
@@ -49,15 +49,6 @@ if __name__ == "__main__":
                 targetfile = targetfile[:-4] # Strip off the '.pkg' if present
     targetfile = targetfile.upper()
 
-    # Check for errors before proceeding
-    if not sourcefile.split('_')[-1][0] == targetfile.split('_')[-1][0]:
-        # Note: This checks the first character of the last substring when the name is split by underscore.
-        # "C_CHR001_C02" will be type "C" and "C_CHR001_FC1" will be type "F"
-        # "C_CHR001" will be type "C" which, while not elegant, will work.
-        print ('Error: Source and target files are not compatible types!  Press any key to quit.')
-        input()
-        raise SystemExit()
-
     # Generate the search and substitution strings to inject into the target model
     if sourcefile.split('_')[-1][0] == 'C':
         source_string = sourcefile
@@ -82,8 +73,12 @@ if __name__ == "__main__":
         first_file_after_xml_info_from_header = [file_entry_offset, file_entry_compressed_size, file_entry_uncompressed_size, file_entry_flags] #Also grab info for file 2, for chunking the buffer
         f.seek(xml_file_info_from_header[0])
         xml_file = None
+        if xml_file_info_from_header[3] & 1:
+            xml_file = uncompress_nislzss(f, xml_file_info_from_header[2], xml_file_info_from_header[1])
         if xml_file_info_from_header[3] & 4:
             xml_file = uncompress_lz4(f, xml_file_info_from_header[2], xml_file_info_from_header[1])
+        if xml_file_info_from_header[3] & 8:
+            xml_file = uncompress_zstd(f, xml_file_info_from_header[2], xml_file_info_from_header[1])
         patched_file_data = bytearray(source_file_data)
     
     # Determine XML compression type
