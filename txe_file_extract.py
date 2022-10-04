@@ -52,26 +52,29 @@ def find_file(fileName, exact_match = True):
         files.extend(filter_filelist(get_filelist(archives[i]), fileName, exact_match))
     return(files)
 
+def extract_filedata(fileEntry):
+    with open(fileEntry["archiveName"], 'rb') as f:
+        f.seek(fileEntry['fileOffset'] + 16)
+        if fileEntry['uncompressedSize'] <= fileEntry['compressedSize']:
+            return(f.read(fileEntry['uncompressedSize'] - 16))
+        else:
+            return(zlib.decompress(f.read(fileEntry['compressedSize'] - 16), wbits=-15))
+
 def extract_file(fileName, overwrite = False, exact_match = True):
-    filedetails = find_file(fileName, exact_match)
-    for i in range(len(filedetails)):
-        with open(filedetails[i]["archiveName"], 'rb') as f:
-            f.seek(filedetails[i]['fileOffset'] + 16)
-            if filedetails[i]['uncompressedSize'] <= filedetails[i]['compressedSize']:
-                fileout = f.read(filedetails[i]['uncompressedSize'] - 16)
-            else:
-                fileout = zlib.decompress(f.read(filedetails[i]['compressedSize'] - 16), wbits=-15)
-            basedir = os.path.abspath(os.getcwd())
-            if not filedetails[i]['dirName'] == '':
-                filedir = filedetails[i]['dirName'].decode().split('\\')
-                for j in range(len(filedir)):
-                    if not os.path.exists(filedir[j]): 
-                        os.mkdir(filedir[j])
-                    os.chdir(filedir[j])
-            if (overwrite == True) or not os.path.exists(filedetails[i]['fileName'].decode('utf8')):
-                with open(filedetails[i]['fileName'].decode('utf8'),'wb') as f_out:
-                    f_out.write(fileout)
-            os.chdir(basedir)
+    fileEntries = find_file(fileName, exact_match)
+    for i in range(len(fileEntries)):
+        filedata = extract_filedata(fileEntries[i])
+        basedir = os.path.abspath(os.getcwd())
+        if not fileEntries[i]['dirName'] == '':
+            filedir = fileEntries[i]['dirName'].decode().split('\\')
+            for j in range(len(filedir)):
+                if not os.path.exists(filedir[j]): 
+                    os.mkdir(filedir[j])
+                os.chdir(filedir[j])
+        if (overwrite == True) or not os.path.exists(fileEntries[i]['fileName'].decode('utf8')):
+            with open(fileEntries[i]['fileName'].decode('utf8'),'wb') as f_out:
+                f_out.write(filedata)
+        os.chdir(basedir)
 
 if __name__ == "__main__":
     os.chdir(os.path.abspath(os.path.dirname(__file__)))
