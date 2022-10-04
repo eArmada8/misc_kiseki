@@ -67,10 +67,7 @@ def extract_single_file(fileEntry, overwrite = False, interactive = False):
     basedir = os.path.abspath(os.getcwd())
     result = 0
     if not fileEntry['dirName'] == '':
-        try:
-            filedir = fileEntry['dirName'].decode().split('\\')
-        except UnicodeDecodeError:
-            print(fileEntry['dirName'])
+        filedir = fileEntry['dirName'].decode().split('\\')
         for j in range(len(filedir)):
             if not os.path.exists(filedir[j]): 
                 os.mkdir(filedir[j])
