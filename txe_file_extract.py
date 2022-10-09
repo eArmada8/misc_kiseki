@@ -1,8 +1,9 @@
-# Short script / library to extract files from BRA archives in Tokyo Xanadu eX+.
-# Thanks to Sewer56, Luigi Auriemma (QuickBMS), Ekey@Xentax!
+# Short script / library to extract files from BRA archives in Tokyo Xanadu eX+.  It can be used in interactive
+# mode, with command line arguments, or as a library.  Thanks to Sewer56, Luigi Auriemma (QuickBMS), Ekey@Xentax!
+# Instructions: /path/to/python3 txe_file_extract.py --help
 # GitHub eArmada8/misc_kiseki
 
-import os, struct, sys, glob, re, shutil, zlib
+import os, struct, sys, glob, zlib
 
 def get_archivelist():
     return glob.glob('*.bra')
@@ -49,8 +50,10 @@ def filter_filelist(fileList, fileName, exact_match = True):
     else:
         return list(filter(lambda file: fileName.lower().encode() in file["fileName"].lower(), fileList))
 
-def find_file(fileName, exact_match = True):
+def find_file(fileName, exact_match = True, specific_archive = False):
     archives = get_archivelist()
+    if (specific_archive != False):
+        archives = list(filter(lambda archive: specific_archive.lower() in archive.lower(), archives))
     files = []
     for i in range(len(archives)):
         files.extend(filter_filelist(get_filelist(archives[i]), fileName, exact_match))
@@ -75,7 +78,8 @@ def extract_single_file(fileEntry, overwrite = False, interactive = False):
                 os.mkdir(filedir[j])
             os.chdir(filedir[j])
     if os.path.exists(fileEntry['fileName'].decode()) and (interactive == True):
-        if str(input(fileEntry['fileNameEntry'].decode() + " exists! Overwrite? (y/N) ")).lower()[0:1] == 'y':
+        if str(input(fileEntry['fileNameEntry'].decode() + " exists! Overwrite with version from " \
+            + fileEntry['archiveName'] + "? (y/N) ")).lower()[0:1] == 'y':
             overwrite = True
     if (overwrite == True) or not os.path.exists(fileEntry['fileName'].decode()):
         with open(fileEntry['fileName'].decode(),'wb') as f_out:
@@ -84,8 +88,8 @@ def extract_single_file(fileEntry, overwrite = False, interactive = False):
     os.chdir(basedir)
     return(result)
 
-def extract_files(fileName, overwrite = False, exact_match = True, interactive = False):
-    fileEntries = find_file(fileName, exact_match)
+def extract_files(fileName, overwrite = False, exact_match = True, interactive = False, specific_archive = False):
+    fileEntries = find_file(fileName, exact_match, specific_archive)
     for i in range(len(fileEntries)):
         extract_single_file(fileEntries[i], overwrite, interactive)
 
@@ -107,12 +111,15 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser()
         parser.add_argument('-e', '--exact', help="Search for exact match only", action="store_true")
         parser.add_argument('-o', '--overwrite', help="Overwrite existing files", action="store_true")
-        parser.add_argument('filename', help="Name of file(s) to extract")
+        parser.add_argument('-a', '--archive', help="Search only in this archive (e.g. --archive System.bra)", nargs=1, default=False)
+        parser.add_argument('filename', help="Name of file(s) to extract.  " \
+            + "If a .bra file then will extract entire archive, otherwise will search all .bra files for this file.")
         args = parser.parse_args()
         if args.filename[-4:] == '.bra':
             extract_archive(args.filename, overwrite = args.overwrite, interactive = False)
         else:
-            extract_files(args.filename, overwrite = args.overwrite, exact_match = args.exact, interactive = False)
+            extract_files(args.filename, overwrite = args.overwrite, exact_match = args.exact, \
+                interactive = False, specific_archive = args.archive[0])
     else:
         fileName = str(input("Please enter the name of files to extract: [partial matches allowed]  "))
         if fileName[-4:] == '.bra':
