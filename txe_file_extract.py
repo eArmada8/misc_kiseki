@@ -10,7 +10,9 @@ def get_archivelist():
 def get_filelist(archivefile):
     if os.path.exists(archivefile):
         with open(archivefile, 'rb') as f:
-            fileHeader = f.read(4) #Should be PDA, could put error checking in at some point.
+            fileHeader = f.read(4)
+            if fileHeader != b'PDA\x00':
+                return(False)
             compressionType, = struct.unpack('<I', f.read(4))
             fileEntryOffset, = struct.unpack('<I', f.read(4))
             fileCount, = struct.unpack('<I', f.read(4))
