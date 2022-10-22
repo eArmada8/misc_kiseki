@@ -7,7 +7,7 @@
 #
 # GitHub eArmada8/misc_kiseki
 
-import json, sys, os, struct, glob
+import json, sys, os, struct, glob, re, ctypes
 
 # Read and parse gltf into python dictionary
 def obtain_model_data(gltf_filename):
@@ -67,8 +67,17 @@ def read_raw_vertex_buffer(meshname):
 
     #Figure out where the indices are.
     buffer_element_offset = offsets[semantics.index('BLENDINDICES')]
-    buffer_element_format = formats[semantics.index('BLENDINDICES')]
     buffer_element_stride = strides[semantics.index('BLENDINDICES')]
+
+    #Figure out the weight group format (Thank you to DarkStarSword for regex pattern)
+    if re.match(r'''(?:DXGI_FORMAT_)?(?:[RGBAD]8)+_UINT''',formats[semantics.index('BLENDINDICES')]):
+        buffer_element_format = 'uint8'
+    elif re.match(r'''(?:DXGI_FORMAT_)?(?:[RGBAD]16)+_UINT''',formats[semantics.index('BLENDINDICES')]):
+        buffer_element_format = 'uint16'
+    elif re.match(r'''(?:DXGI_FORMAT_)?(?:[RGBAD]32)+_UINT''',formats[semantics.index('BLENDINDICES')]):
+        buffer_element_format = 'uint32'
+    else:
+        return(False)
 
     #Grab the blend indices from the vertex buffer
     with open(meshname + '.vb', 'rb') as f:
@@ -77,10 +86,16 @@ def read_raw_vertex_buffer(meshname):
         indices = []
         for i in range(vertex_count):
             f.seek(combined_stride * i + buffer_element_offset, 0)
-            if 'UINT' in buffer_element_format: # Currently only supporting unsigned int formats
-                for j in range(int(buffer_element_stride / 4)):
-                    index, = struct.unpack('<I', f.read(4))
-                    indices.append(index)
+            for j in range(int(buffer_element_stride / 4)):
+                index = 0
+                rawindex, = struct.unpack('<I', f.read(4))
+                if buffer_element_format == 'uint8':
+                    index = ctypes.c_uint8(rawindex).value
+                elif buffer_element_format == 'uint16':
+                    index = ctypes.c_uint16(rawindex).value
+                if buffer_element_format == 'uint32':
+                    index = ctypes.c_uint32(rawindex).value
+                indices.append(index)
 
     #Sort and pull out unique bones
     bone_list = list(set(indices))
