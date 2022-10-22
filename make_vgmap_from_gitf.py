@@ -123,9 +123,9 @@ def pick_gltf_mesh_for_skeleton(gltf_filename, meshname):
     elif len(model_data.get("meshes")) == 1:
         return(0) # Only one mesh to choose from
     else:
-        print('For processing mesh ' + meshname + ', which mesh has your skeleton?\n\n')
+        print('For processing mesh ' + meshname + ', which mesh has your skeleton?\n')
         for i in range(len(model_data.get("meshes"))):
-            print(str(i+1) + '. ' + model_data["meshes"][i]["name"] + '\n')
+            print(str(i+1) + '. ' + model_data["meshes"][i]["name"])
         gltf_mesh_choice = -1
         while (gltf_mesh_choice < 0) or (gltf_mesh_choice >= len(model_data.get("meshes"))):
             try:
@@ -143,9 +143,9 @@ def pick_gltf(meshname):
     elif len(gltf_files) == 1:
         gltf['gltf_filename'] = (gltf_files[0]) # Only one model to choose from
     else:
-        print('For processing mesh ' + meshname + ', which GLTF file has your skeleton?\n\n')
+        print('For processing mesh ' + meshname + ', which GLTF file has your skeleton?\n')
         for i in range(len(gltf_files)):
-            print(str(i+1) + '. ' + gltf_files[i] + '\n')
+            print(str(i+1) + '. ' + gltf_files[i])
         gltf_file_choice = -1
         while (gltf_file_choice < 0) or (gltf_file_choice >= len(gltf_files)):
             try:
