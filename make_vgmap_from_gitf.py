@@ -86,16 +86,21 @@ def read_raw_vertex_buffer(meshname):
         indices = []
         for i in range(vertex_count):
             f.seek(combined_stride * i + buffer_element_offset, 0)
-            for j in range(int(buffer_element_stride / 4)):
-                index = 0
-                rawindex, = struct.unpack('<I', f.read(4))
-                if buffer_element_format == 'uint8':
-                    index = ctypes.c_uint8(rawindex).value
-                elif buffer_element_format == 'uint16':
+            if buffer_element_format == 'uint8':
+                for j in range(int(buffer_element_stride)):
+                    rawindex, = struct.unpack('<I', f.read(1)+b'\x00\x00\x00')
+                    index = ctypes.c_uint8(int.from_bytes(f.read(1), byteorder="little")).value
+                    indices.append(index)
+            if buffer_element_format == 'uint16':
+                for j in range(int(buffer_element_stride / 2)):
+                    rawindex, = struct.unpack('<I', f.read(2)+b'\x00\x00')
                     index = ctypes.c_uint16(rawindex).value
-                if buffer_element_format == 'uint32':
+                    indices.append(index)
+            if buffer_element_format == 'uint32':
+                for j in range(int(buffer_element_stride / 4)):
+                    rawindex, = struct.unpack('<I', f.read(4))
                     index = ctypes.c_uint32(rawindex).value
-                indices.append(index)
+                    indices.append(index)
 
     #Sort and pull out unique bones
     bone_list = list(set(indices))
