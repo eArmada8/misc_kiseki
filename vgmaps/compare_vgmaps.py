@@ -33,7 +33,11 @@ if __name__ == "__main__":
     with open(second, 'r') as f:
         second_data = json.loads(f.read())
     differences = {}
-    differences['not_in_'+first] = list(first_data.keys() - second_data.keys())
-    differences['not_in_'+second] = list(second_data.keys() - first_data.keys())
-    with open('vgmap_differences.json', 'wb') as f:
-        f.write(json.dumps(differences, indent=4).encode("utf-8"))
+    differences['not_in_'+first] = list(second_data.keys() - first_data.keys())
+    differences['not_in_'+second] = list(first_data.keys() - second_data.keys())
+    #with open('vgmap_differences.json', 'wb') as f:
+        #f.write(json.dumps(differences, indent=4).encode("utf-8"))
+    with open('not_in_' + first + '.json', 'wb') as f:
+        f.write(json.dumps(differences['not_in_'+first], indent=4).encode("utf-8"))
+    with open('not_in_' + second + '.json', 'wb') as f:
+        f.write(json.dumps(differences['not_in_'+second], indent=4).encode("utf-8"))
