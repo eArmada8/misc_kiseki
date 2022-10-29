@@ -28,3 +28,13 @@ if __name__ == "__main__":
     if (overwrite == True) or not os.path.exists(output_file):
         with open(output_file, "wb") as f:
             f.write(json.dumps(vgmap, indent=5).encode("utf-8"))
+    meshes = retrieve_meshes()
+    for i in range(len(meshes)):
+        overwrite = False
+        vgmap_name = meshes[i] + '.vgmap'
+        if os.path.exists(vgmap_name):
+            if str(input(vgmap_name + " exists! Overwrite? (y/N) ")).lower()[0:1] == 'y':
+                overwrite = True
+        if (overwrite == True) or not os.path.exists(vgmap_name):
+            with open(vgmap_name, 'wb') as f:
+                f.write(json.dumps(vgmap, indent=5).encode("utf-8"))
