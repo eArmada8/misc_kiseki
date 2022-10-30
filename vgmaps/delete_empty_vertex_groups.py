@@ -1,5 +1,5 @@
 # Short script to delete any empty vertex groups.  Run inside Blender.
-# GitHub eArmada8/gust_stuff
+# GitHub eArmada8/misc_kiseki
 
 import bpy
 ob = bpy.context.object
