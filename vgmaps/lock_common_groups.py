@@ -1,6 +1,6 @@
 # Short script to lock common groups based on vgmap diff file in JSON. Run inside Blender.
 # Thank you to Sinestesia
-# GitHub eArmada8/gust_stuff
+# GitHub eArmada8/misc_kiseki
 
 import bpy, os, json
 from bpy.props import StringProperty, BoolProperty
