@@ -13,7 +13,7 @@ if __name__ == "__main__":
     else:
         print('More than two maps found!\n')
         for i in range(len(vgmaps)):
-            print(str(i) + '. ' + vgmaps[i])
+            print(str(i+1) + '. ' + vgmaps[i])
         first_num = -1
         while (first_num < 0) or (first_num >= len(vgmaps)):
             try:
@@ -24,7 +24,7 @@ if __name__ == "__main__":
         second_num = -1
         while (second_num < 0) or (second_num >= len(vgmaps)):
             try:
-                second_num = int(input("\nPlease pick first mesh to compare:  ")) - 1 
+                second_num = int(input("\nPlease pick second mesh to compare:  ")) - 1 
             except ValueError:
                 pass
         second = vgmaps[second_num]
