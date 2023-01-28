@@ -70,3 +70,20 @@ if __name__ == "__main__":
 
     # Clean up memory (probably not necessary)
     del source_file_data
+
+    # For Kuro 2, check for the JSON data
+    mi_path = '../../../../f/asset/common/model_info/'
+    if os.path.exists(mi_path + sourcefile + '.mi') and os.path.exists(mi_path + targetfile + '.mi'):
+        # Figure out which file to inject.  If an original file exists, use that file, otherwise use the current file.
+        if os.path.exists(mi_path + sourcefile + '.mi.original'):
+            mi_file_to_inject = mi_path + sourcefile + '.mi.original'
+        else:
+            mi_file_to_inject = mi_path + sourcefile + '.mi'
+        # Make a target backup, only if no backup exists.
+        if not os.path.exists(mi_path + targetfile + '.mi.original'):
+            shutil.copy2(mi_path + targetfile + '.mi', mi_path + targetfile + '.mi.original')
+        # Read source model into memory and write
+        with open(mi_file_to_inject, 'rb') as f:
+            source_file_data = f.read()
+        with open(mi_path + targetfile + '.mi', 'wb') as f:
+            f.write(source_file_data)
