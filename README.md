@@ -1,9 +1,11 @@
 # misc_kiseki
 Random code for Kiseki (trails) modding
 
-**Injection scripts have moved to: https://github.com/eArmada8/ed8_inject**
+**Cold Steel / TXe Injection scripts have moved to: https://github.com/eArmada8/ed8_inject**
 
 This is a storage space for miscellaneous scripts I've written for Falcom games (Kiseki / Trails etc) modding.  Currently:
+
+a00000 - inject kuro model.py:  Same as "aa - inject model.py" but for Kuro no Kiseki CLE
 
 3dmigoto_mod_picker.py:  This script recursively searches a 3DMigoto Mods directory and looks for multiple calls to duplicate hashes.  It disables directories (based on user choice) so that only one directory is enabled for each cluster of identical hashes (128-bit).  256-bit hashes (shaders) all get rewritten to allow duplicate calls.
 
