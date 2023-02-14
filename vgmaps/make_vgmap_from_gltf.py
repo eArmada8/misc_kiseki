@@ -7,7 +7,8 @@
 #
 # GitHub eArmada8/misc_kiseki
 
-import json, sys, os, struct, glob, re, ctypes
+import json, sys, os, struct, glob
+from lib_fmtibvb import *
 
 # Read and parse gltf into python dictionary
 def obtain_model_data(gltf_filename):
@@ -42,65 +43,13 @@ def read_text_vertex_buffer(vb_filename):
     return(bone_list)
 
 def read_raw_vertex_buffer(meshname):
-    #Determine the offsets used in the combined buffer by parsing the FMT file
-    semantics = []
-    formats = []
-    offsets = []
-    with open(meshname + '.fmt', 'r') as f:
-        for line in f:
-            if line[0:6] == 'stride':
-                combined_stride = int(line[8:-1])
-            if line[2:14] == 'SemanticName':
-                semantics.append(line[16:-1])
-            if line[2:8] == 'Format':
-                formats.append(line[10:-1])
-            if line[2:19] == 'AlignedByteOffset':
-                offsets.append(int(line[21:-1]))
-
-    #Determine the strides to be used in the individual buffers
-    strides = []
-    for i in range(len(offsets)):
-        if i == len(offsets) - 1:
-            strides.append(combined_stride - offsets[i])
-        else:
-            strides.append(offsets[i+1] - offsets[i])
-
+    fmt = read_fmt(meshname + '.fmt')
     #Figure out where the indices are.
-    buffer_element_offset = offsets[semantics.index('BLENDINDICES')]
-    buffer_element_stride = strides[semantics.index('BLENDINDICES')]
-
-    #Figure out the weight group format (Thank you to DarkStarSword for regex pattern)
-    if re.match(r'''(?:DXGI_FORMAT_)?(?:[RGBAD]8)+_UINT''',formats[semantics.index('BLENDINDICES')]):
-        buffer_element_format = 'uint8'
-    elif re.match(r'''(?:DXGI_FORMAT_)?(?:[RGBAD]16)+_UINT''',formats[semantics.index('BLENDINDICES')]):
-        buffer_element_format = 'uint16'
-    elif re.match(r'''(?:DXGI_FORMAT_)?(?:[RGBAD]32)+_UINT''',formats[semantics.index('BLENDINDICES')]):
-        buffer_element_format = 'uint32'
-    else:
-        return(False)
+    blendindices_element = [i for i in range(len(fmt['elements'])) if fmt['elements'][i]['SemanticName'] == 'BLENDINDICES'][0]
 
     #Grab the blend indices from the vertex buffer
-    with open(meshname + '.vb', 'rb') as f:
-        #Count the total number of vertices
-        vertex_count = int(len(f.read())/combined_stride)
-        indices = []
-        for i in range(vertex_count):
-            f.seek(combined_stride * i + buffer_element_offset, 0)
-            if buffer_element_format == 'uint8':
-                for j in range(int(buffer_element_stride)):
-                    rawindex, = struct.unpack('<I', f.read(1)+b'\x00\x00\x00')
-                    index = ctypes.c_uint8(int.from_bytes(f.read(1), byteorder="little")).value
-                    indices.append(index)
-            if buffer_element_format == 'uint16':
-                for j in range(int(buffer_element_stride / 2)):
-                    rawindex, = struct.unpack('<I', f.read(2)+b'\x00\x00')
-                    index = ctypes.c_uint16(rawindex).value
-                    indices.append(index)
-            if buffer_element_format == 'uint32':
-                for j in range(int(buffer_element_stride / 4)):
-                    rawindex, = struct.unpack('<I', f.read(4))
-                    index = ctypes.c_uint32(rawindex).value
-                    indices.append(index)
+    vb = read_vb(meshname + '.vb', fmt)
+    indices = [x for y in vb[blendindices_element]['Buffer'] for x in y]
 
     #Sort and pull out unique bones
     bone_list = list(set(indices))
@@ -181,7 +130,10 @@ if __name__ == "__main__":
     meshes = retrieve_meshes()
     for i in range(len(meshes)):
         overwrite = False
+        print("Mesh: {0}".format(meshes[i]))
         bone_list = read_raw_vertex_buffer(meshes[i])
+        print("Mesh: {0}".format(bone_list))
+       
         vgmap = make_vgmap_for_bone_list(bone_list, meshes[i])
         vgmap_name = meshes[i] + '.vgmap'
         if os.path.exists(vgmap_name):
