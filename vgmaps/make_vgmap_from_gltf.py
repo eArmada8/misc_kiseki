@@ -130,9 +130,7 @@ if __name__ == "__main__":
     meshes = retrieve_meshes()
     for i in range(len(meshes)):
         overwrite = False
-        print("Mesh: {0}".format(meshes[i]))
         bone_list = read_raw_vertex_buffer(meshes[i])
-        print("Mesh: {0}".format(bone_list))
        
         vgmap = make_vgmap_for_bone_list(bone_list, meshes[i])
         vgmap_name = meshes[i] + '.vgmap'
