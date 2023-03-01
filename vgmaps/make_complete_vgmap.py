@@ -14,7 +14,9 @@ if __name__ == "__main__":
     model = pick_gltf('*COMPLETE MODEL*')
     model_data = obtain_model_data(model['gltf_filename'])
     model_nodes = model_data['nodes']
-    model_bones = model_data["skins"][model['gltf_mesh_id']]["joints"]
+    model_skin = [x['skin'] for x in model_data['nodes']\
+        if 'skin' in x.keys() and 'mesh' in x.keys() and x['mesh'] == model['gltf_mesh_id']][0]
+    model_bones = model_data["skins"][model_skin]["joints"]
     model_bone_nodes = [model_nodes[i] for i in model_bones]
     model_bones = create_bone_dictionary(model_bone_nodes)
     vgmap = {}
