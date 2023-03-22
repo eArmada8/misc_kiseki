@@ -17,6 +17,6 @@ for vertex in ob.data.vertices:
 assigned_groups = list(set(assigned_groups))
 empty_groups = [x for x in all_groups if x not in assigned_groups]
 # Delete empty groups
-for group in ob.vertex_groups:
-    if group.index in empty_groups:
-        ob.vertex_groups.remove(group)
+for i in reversed(range(len(ob.vertex_groups))):
+    if i in empty_groups:
+        ob.vertex_groups.remove(ob.vertex_groups[i])
