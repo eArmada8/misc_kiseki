@@ -29,8 +29,8 @@ This script does the same thing as make_vgmap_from_gltf.py, except it will inclu
 ### compare_vgmaps.py
 This script will take two .vgmap files, and create two lists of missing groups (groups in the first .vgmap that are not in the second .vgmap, and vice versa) as JSON files.  To be used with lock_common_groups.py.
 
-### lock_common_groups.py
-*This script is to be run in Blender.*  This script will ask for a JSON file from compare_vgmaps.py, and will then either lock or unlock groups based on whether they are in the JSON file.  Groups that are present in the skeleton you wish to port to will be locked, and groups that are absent (and therefore in the JSON file) will be unlocked.  Select the mesh in object mode, then go to Scripting, open and run this script.
+### blender_lock_groups_with_vgmap.py
+*This is a Blender add-on.*  This addon will ask for one or more .vgmap files, and will then either lock or unlock groups based on whether they are in the .vgmap file(s).  Groups that are present in the skeleton you wish to port to will be locked, and groups that are absent will be unlocked.  The add-on is located at Object Data Properties > Vertex Groups > Vertex Group Specials.
 
-### delete_empty_vertex_groups.py
-*This script is to be run in Blender.*  Accessory script to delete any vertex groups that do not have any vertices in them.  If you have deleted part of a mesh, you can run this script to delete any vertex groups that are now empty.
+### blender_delete_empty_vertex_groups.py
+*This is a Blender add-on.*  This addon will delete any vertex groups that do not have any vertices in them.  If you have deleted part of a mesh, you can run this add-on to delete any vertex groups that are now empty.  The add-on is located at Object Data Properties > Vertex Groups > Vertex Group Specials.
