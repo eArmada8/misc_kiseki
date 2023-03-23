@@ -18,7 +18,7 @@ I am very thankful for uyjulian, TwnKey, DarkStarSword, the KuroTools team and t
 
 ## Usage:
 ### kuro_mdl_to_gltf.py
-This script is a fork of https://gist.github.com/uyjulian/9a9d6395682dac55d113b503b1172009 by uyjulian.  It converts MDL files to glTF.  My fork incorporates automatic decryption / decompression of CLE assets, and also does not require command-line usage.  When double-clicked, it will search for and convert all the MDL files in the current folder.  Decryption algorithm comes from KuroTools.  All the remaining tools rely on the glTF output of this script.
+This script is a fork of https://gist.github.com/uyjulian/9a9d6395682dac55d113b503b1172009 by uyjulian.  It converts Kuro 1 MDL files to glTF.  My fork incorporates automatic decryption / decompression of CLE assets, and also does not require command-line usage.  When double-clicked, it will search for and convert all the MDL files in the current folder.  Decryption algorithm comes from KuroTools.  All the remaining tools rely on the glTF output of this script.  (This does not work for Kuro 2, please use Kuro MDL Tools.)
 
 ### make_vgmap_from_gltf.py
 This script will load the skeleton from the glTF model provided, then it will load each mesh and generate a .vgmap file with proper bone names.  Place in the same folder as the glTF and the meshes in .fmt/.ib/.vb format (only the .fmt and .vb files are used), and double-click the script.  For each mesh, it will ask you which skeleton you would like to use (the mdl file generally includes 3 - hair, body and shadow).  It only includes non-empty groups in the final .vgmap - if you would like the entire skeleton, use make_complete_vgmap.py.
