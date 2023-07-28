@@ -50,7 +50,8 @@ class dlc_table_maker:
             for row in names:
                 #if not row[0] == 'character' and not row[0] == '65535':
                 if not row[0] == 'character' and int(row[0]) < 200 and len(row[2].split("_")) == 2:
-                    name_dict[row[2]] = {'chr_id': int(row[0]), 'chr_name': row[1]}
+                    if row[2] not in name_dict.keys():
+                        name_dict[row[2]] = {'chr_id': int(row[0]), 'chr_name': row[1]}
         return(name_dict)
 
     def get_items_from_jsons (self):
