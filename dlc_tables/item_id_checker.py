@@ -32,20 +32,20 @@ def read_id_numbers(table):
 def get_all_id_numbers():
     if os.path.exists('data/text/'):
         item_tables = glob.glob('data/**/t_item.tbl', recursive = True)
-    all_item_numbers = []
+    all_item_numbers = {}
     for i in range(len(item_tables)):
-        all_item_numbers.extend(read_id_numbers(item_tables[i]))
-    return(sorted(list(set(all_item_numbers))))
+        all_item_numbers.update({x:item_tables[i] for x in read_id_numbers(item_tables[i])})
+    return(all_item_numbers)
 
 def check_id_number(all_item_numbers, number = -1):
     while number == -1:
-        print("The current range of ID numbers is {0} to {1}.".format(min(all_item_numbers), max(all_item_numbers)))
+        print("The current range of ID numbers is {0} to {1}.".format(min(all_item_numbers.keys()), max(all_item_numbers.keys())))
         number_input = input("What number would you like to check? ")
         try:
             number = int(number_input)
         except ValueError:
             print("Invalid Entry!")
-    return(number in all_item_numbers)
+    return(number in all_item_numbers.keys())
 
 if __name__ == "__main__":
     # Set current directory
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         parser.add_argument('id_num', help="ID Number to check.")
         args = parser.parse_args()
         if check_id_number(all_item_numbers, int(args.id_num)):
-            print("Item ID {0} already exists!".format(int(args.id_num)))
+            print("Item ID {0} is in {1}!".format(int(args.id_num), all_item_numbers[number]))
         else:
             print("Item ID {0} does not exist!".format(int(args.id_num)))
     else:
@@ -71,7 +71,7 @@ if __name__ == "__main__":
                 try:
                     number = int(number_input)
                     if check_id_number(all_item_numbers, number):
-                        print("Item ID {0} already exists!".format(number))
+                        print("Item ID {0} is in {1}!".format(number, all_item_numbers[number]))
                     else:
                         print("Item ID {0} does not exist!".format(number))
                     number = -1
