@@ -125,7 +125,7 @@ class dlc_table_maker:
                     print("-1. Any character")
                     for j in range(len(unique_chars)):
                         print("{0}. {1}".format(unique_chars[j], self.get_chr_name(unique_chars[j])))
-                    print("(Any number <200 is accepted, see {0} for other options)".format({4:'ed84nisa.csv', 5:'ed85nisa.csv'}[self.dlc_details['game_type']]))
+                    print("(Any number <200 is accepted, see {0} for other options)".format({3:'ed83nisa.csv', 4:'ed84nisa.csv', 5:'ed85nisa.csv'}[self.dlc_details['game_type']]))
                     chr_id_raw = input("Character restriction for {0}: ".format(packages[i]))
                     try:
                         if int(chr_id_raw) == -1:
