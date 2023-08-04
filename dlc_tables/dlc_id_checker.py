@@ -31,9 +31,10 @@ def read_id_numbers(table):
 
 def get_all_id_numbers():
     if os.path.exists('data/text/'):
-        item_tables = glob.glob('data/**/t_dlc.tbl', recursive = True)
+        item_tables = glob.glob('data/dlc/**/t_dlc.tbl', recursive = True)
     all_item_numbers = []
     for i in range(len(item_tables)):
+        print("Checking {0}...".format(item_tables[i]))
         all_item_numbers.extend(read_id_numbers(item_tables[i]))
     return(sorted(list(set(all_item_numbers))))
 

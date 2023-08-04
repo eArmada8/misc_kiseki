@@ -31,10 +31,36 @@ def read_id_numbers(table):
 
 def get_all_id_numbers():
     if os.path.exists('data/text/'):
-        item_tables = glob.glob('data/**/t_item.tbl', recursive = True)
+        item_tables = glob.glob('data/text/**/t_item_en.tbl', recursive = True)
+        if len(item_tables) < 1:
+            item_tables = glob.glob('data/text/**/t_item.tbl', recursive = True)
+            if len(item_tables) < 1:
+                input("No master item table found, is this script in the root game folder?")
+            else:
+                item_tables = [item_tables[0]]
+        else:
+            item_tables = [item_tables[0]]
+        #In reading DLC tables, default to English, otherwise the first option available (usually dat)
+        dats = [x.replace('\\','/').split('/')[-1] for x in glob.glob(glob.glob('data/dlc/text/*')[0]+'/*')]
+        if 'dat_en' in dats:
+            dat_name = 'dat_en'
+        else:
+            dat_name = dat[0]
+        item_tables.extend(sorted(glob.glob('data/dlc/**/{0}/t_item.tbl'.format(dat_name), recursive = True)))
+    else:
+        input("No master item table found, is this script in the root game folder?")
     all_item_numbers = {}
+    all_dlc_item_numbers = {}
     for i in range(len(item_tables)):
+        print("Checking {0}...".format(item_tables[i]))
         all_item_numbers.update({x:item_tables[i] for x in read_id_numbers(item_tables[i])})
+        if i > 0:
+            all_dlc_item_numbers.update({x:item_tables[i] for x in read_id_numbers(item_tables[i])})
+    dlc_available = [x for x in range(min(all_dlc_item_numbers.keys()), max(all_item_numbers.keys())) if x not in all_item_numbers.keys()]
+    if len(dlc_available) > 10:
+        print("The next 10 available id numbers are {0}".format(dlc_available[0:10]))
+    else:
+        print("The next {0} available id numbers are {1}".format(len(dlc_available), dlc_available))
     return(all_item_numbers)
 
 def check_id_number(all_item_numbers, number = -1):
