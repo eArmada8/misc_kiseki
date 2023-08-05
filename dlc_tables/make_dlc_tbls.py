@@ -85,6 +85,7 @@ class dlc_table_maker:
         existing_items = self.get_items_from_jsons()
         pkg_dict = {}
         for i in range(len(packages)):
+            print("\nProcessing {0}...\n".format(packages[i]))
             if os.path.exists(packages[i] + '.json'):
                 with open(packages[i] + '.json', 'r') as f:
                     pkg_details = json.loads(f.read())
@@ -97,6 +98,7 @@ class dlc_table_maker:
                     pkg_details['item_id'] = int(item_id_raw)
                     if pkg_details['item_id'] in list(existing_items.keys()):
                         pkg_details['item_type'] = existing_items[pkg_details['item_id']]['item_type']
+                        pkg_details['item_quantity'] = existing_items[pkg_details['item_id']]['item_quantity']
                         pkg_details['chr_id'] = existing_items[pkg_details['item_id']]['chr_id']
                         pkg_details['item_name'] = existing_items[pkg_details['item_id']]['item_name']
                         pkg_details['item_desc'] = existing_items[pkg_details['item_id']]['item_desc']
@@ -141,6 +143,15 @@ class dlc_table_maker:
                 pkg_details['item_name'] = str(input("Item Name for {0}: ".format(packages[i]))).encode('utf-8').decode('utf-8')
             while 'item_desc' not in pkg_details.keys() or pkg_details['item_desc'] == '':
                 pkg_details['item_desc'] = str(input("Item Description for {0}: ".format(packages[i]))).encode('utf-8').decode('utf-8')
+            while 'item_quantity' not in pkg_details.keys():
+                item_quant_raw = input("How many should be included in the DLC? [Leave blank for 1] ".format(packages[i]))
+                if item_quant_raw == '':
+                    pkg_details['item_quantity'] = 1
+                else:
+                    try:
+                        pkg_details['item_quantity'] = min(max(int(item_quant_raw),1),99)
+                    except ValueError:
+                        print("Invalid entry!")
             pkg_dict[packages[i]] = pkg_details
             if pkg_details['item_id'] not in list(existing_items.keys()):
                 existing_items[pkg_details['item_id']] = pkg_details
@@ -201,7 +212,8 @@ class dlc_table_maker:
         items_added = []
         for i in range(len(self.package_list)):
             if self.packages[self.package_list[i]]['item_id'] not in items_added:
-                dlc_tbl_entry += struct.pack("<2h", self.packages[self.package_list[i]]['item_id'], 1) # Second number is quantity
+                dlc_tbl_entry += struct.pack("<2h", self.packages[self.package_list[i]]['item_id'],\
+                    self.packages[self.package_list[i]]['item_quantity']) # Second number is quantity
                 items_added.append(self.packages[self.package_list[i]]['item_id'])
         if 20 - len(items_added) > 0:
             for i in range(20 - len(items_added)):
