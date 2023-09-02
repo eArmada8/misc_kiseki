@@ -305,7 +305,7 @@ def resolve_dlc(allow_low_numbers = False):
                     replace_dlc_id(int(all_prior_entries[conflicts[j]].replace('\\','/').split('/')[3]), conflicts[j], next_available)
                     all_utilized_item_ids.append(next_available)
                 elif table_to_fix == 2:
-                    print("Replacing DLC ID {0} with {1} in DLC {2}.\n".format(conflicts[j], next_available, item_tables[i].replace('\\','/').split('/')[3]))
+                    print("Replacing DLC ID {0} with {1} in DLC {2}.\n".format(conflicts[j], next_available, dlc_tables[i].replace('\\','/').split('/')[3]))
                     replace_dlc_id(int(dlc_tables[i].replace('\\','/').split('/')[3]), conflicts[j], next_available)
                     all_utilized_item_ids.append(next_available)
                 else:
