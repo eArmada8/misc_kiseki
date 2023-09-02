@@ -194,6 +194,7 @@ def resolve_dlc(allow_low_numbers = False):
         else:
             dat_name = dat[0]
         item_tables.extend(sorted(glob.glob('data/dlc/**/{0}/t_item.tbl'.format(dat_name), recursive = True)))
+        dlc_tables = [x.replace('\\','/') for x in glob.glob('data/dlc/text/*/{}/t_dlc.tbl'.format(dat_name))]
     else:
         input("No master item table found, is this script in the root game folder?")
     #Evaluate for conflicts, one table at a time
@@ -245,7 +246,23 @@ def resolve_dlc(allow_low_numbers = False):
                 else:
                     print("Skipping item ID {0}.".format(conflicts[j]))
         valid_items.extend(list(read_id_numbers_with_offsets(item_tables[i]).keys()))
-    input("Done resolving all conflicts!  Press Enter to quit.")
+    valid_dlcs = []
+    dlc_conflicts_found = False
+    for i in range(len(dlc_tables)):
+        current_table_dlcs = read_id_numbers_with_offsets(dlc_tables[i])
+        if any([x in valid_dlcs for x in list(current_table_dlcs.keys())]):
+            # There is a conflict, find the conflicts and report them one at a time
+            dlc_conflicts_found = True
+            conflicts = [x for x in list(current_table_dlcs.keys()) if x in valid_dlcs]
+            all_prior_entries = get_all_id_numbers(dlc_tables[0:i])
+            for j in range(len(conflicts)):
+                print("Warning! Conflict found in {0}, dlc ID {1} also assigned to {2}.".format(dlc_tables[i].split('/dat')[0],\
+                    conflicts[j], all_prior_entries[conflicts[j]].split('/dat')[0]))
+        valid_dlcs.extend(list(read_id_numbers_with_offsets(dlc_tables[i]).keys()))
+    if dlc_conflicts_found:
+        input("Done resolving all item ID conflicts, but there are still DLC ID conflicts!  Press Enter to quit.")
+    else:
+        input("Done resolving all conflicts!  Press Enter to quit.")
     return
 
 if __name__ == "__main__":
