@@ -3,7 +3,7 @@
 #
 # GitHub eArmada8/misc_kiseki
 
-import struct, os, glob, sys
+import struct, os, glob, sys, shutil
 
 def read_null_terminated_string(f):
     null_term_string = f.read(1)
@@ -60,6 +60,60 @@ def detect_ed8_game():
         except ValueError:
             pass
     return(game_type)
+
+def valid_tbl (table_filename):
+    with open(table_filename, 'rb') as f:
+        total_entries, num_sections = struct.unpack("<hi",f.read(6))
+        section_data = []
+        for i in range(num_sections):
+            section = {'name': read_null_terminated_string(f),\
+                'num_items': struct.unpack("<i", f.read(4))[0]}
+            section_data.append(section)
+        for i in range(len(section_data)):
+            for j in range(section_data[i]['num_items']):
+                entry_type = read_null_terminated_string(f)
+                offset = f.tell()
+                block_size, = struct.unpack("<h", f.read(2))
+                if not entry_type == section_data[i]['name']:
+                    return False
+                f.seek(block_size,1)
+    return True
+
+# Returns length (true block size)
+def read_table_section (f, entry_type, game_type = 0):
+    # 0 is null-terminated string
+    schema = {3: {'item': [4, 0, 127, 0, 0, 8], 'item_q': [4, 0, 127, 0, 0, 20], 'dlc': [8, 0, 0, 80]}, \
+        4: {'item': [4, 0, 150, 0, 0, 8], 'item': [4, 0, 150, 0, 0, 20], 'dlc':  [20, 0, 0, 80]}, \
+        5: {'item': [4, 0, 141, 0, 0], 'item_e': [4, 0, 141, 0, 0, 10], 'item_q': [4, 0, 141, 0, 0, 22], 'dlc': [20, 0, 0, 80]}}
+    list_to_read = schema[game_type][entry_type]
+    start = f.tell()
+    for i in range(len(list_to_read)):
+        if list_to_read[i] == 0:
+            data = read_null_terminated_string(f)
+        else:
+            data = f.read(list_to_read[i])
+    return(f.tell() - start)
+
+def repair_tbl (table_filename, game_type = 0):
+    if game_type in [3,4,5]:
+        shutil.copy2(table_filename, table_filename + '.bak')
+        with open(table_filename, 'r+b') as f:
+            total_entries, num_sections = struct.unpack("<hi",f.read(6))
+            section_data = []
+            for i in range(num_sections):
+                section = {'name': read_null_terminated_string(f),\
+                    'num_items': struct.unpack("<i", f.read(4))[0]}
+                section_data.append(section)
+            for i in range(len(section_data)):
+                for j in range(section_data[i]['num_items']):
+                    entry_type = read_null_terminated_string(f)
+                    offset = f.tell()
+                    block_size, = struct.unpack("<h", f.read(2))
+                    true_block_size = read_table_section (f, entry_type, game_type)
+                    f.seek(offset)
+                    f.write(struct.pack("<h", true_block_size))
+                    f.seek(true_block_size,1)
+        return
 
 def read_id_numbers_with_offsets(table):
     item_numbers = {}
@@ -215,6 +269,10 @@ def resolve_dlc(allow_low_numbers = False):
     else:
         input("No master item table found, is this script in the root game folder?")
     #Evaluate for conflicts, one table at a time
+    for i in range(len(item_tables)):
+        if not valid_tbl(item_tables[i]):
+            print("{0} corrupt, attempting backup and auto-repair...".format(item_tables[i]))
+            repair_tbl(item_tables[i], game_type)
     all_utilized_item_ids = sorted(list(get_all_id_numbers(item_tables).keys()))
     dlc_ids = sorted(list(get_all_id_numbers(item_tables[1:]).keys()))
     valid_items = []
@@ -267,6 +325,9 @@ def resolve_dlc(allow_low_numbers = False):
     all_utilized_dlc_ids = sorted(list(get_all_id_numbers(dlc_tables).keys()))
     valid_dlcs = []
     for i in range(len(dlc_tables)):
+        if not valid_tbl(dlc_tables[i]):
+            print("{0} corrupt, attempting backup and auto-repair...".format(dlc_tables[i]))
+            repair_tbl(dlc_tables[i], game_type)
         current_table_dlcs = read_id_numbers_with_offsets(dlc_tables[i])
         if any([x in valid_dlcs for x in list(current_table_dlcs.keys())]):
             # There is a conflict, find the conflicts and report them one at a time
@@ -303,11 +364,11 @@ def resolve_dlc(allow_low_numbers = False):
                 if table_to_fix == 1:
                     print("Replacing DLC ID {0} with {1} in DLC {2}.\n".format(conflicts[j], next_available, all_prior_entries[conflicts[j]].replace('\\','/').split('/')[3]))
                     replace_dlc_id(int(all_prior_entries[conflicts[j]].replace('\\','/').split('/')[3]), conflicts[j], next_available)
-                    all_utilized_item_ids.append(next_available)
+                    all_utilized_dlc_ids.append(next_available)
                 elif table_to_fix == 2:
                     print("Replacing DLC ID {0} with {1} in DLC {2}.\n".format(conflicts[j], next_available, dlc_tables[i].replace('\\','/').split('/')[3]))
                     replace_dlc_id(int(dlc_tables[i].replace('\\','/').split('/')[3]), conflicts[j], next_available)
-                    all_utilized_item_ids.append(next_available)
+                    all_utilized_dlc_ids.append(next_available)
                 else:
                     print("Skipping item ID {0}.".format(conflicts[j]))
         valid_dlcs.extend(list(read_id_numbers_with_offsets(dlc_tables[i]).keys()))
