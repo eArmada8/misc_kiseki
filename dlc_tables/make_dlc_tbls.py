@@ -4,10 +4,12 @@
 #
 # GitHub eArmada8/misc_kiseki
 
-import os, csv, json, struct, glob
+import os, csv, json, struct, glob, random
 
 class dlc_table_maker:
     def __init__ (self):
+        random.seed()
+        self.random_number = round(random.random()*888+2000)
         self.dlc_details = self.get_dlc_details()
         self.name_dict = self.get_names({3:'ed83nisa.csv', 4:'ed84nisa.csv', 5:'ed85nisa.csv'}[self.dlc_details['game_type']])
         self.packages = self.get_pkg_details()
@@ -36,6 +38,8 @@ class dlc_table_maker:
                 dlc_details['dlc_id'] = int(dlc_id_raw)
             except ValueError:
                 print("Invalid entry!")
+        while 'dlc_sort_id' not in dlc_details.keys():
+            dlc_details['dlc_sort_id'] = self.random_number
         while 'dlc_name' not in dlc_details.keys() or dlc_details['dlc_name'] == '':
             dlc_details['dlc_name'] = str(input("DLC Name: ")).encode('utf-8').decode('utf-8')
         while 'dlc_desc' not in dlc_details.keys() or dlc_details['dlc_desc'] == '':
@@ -139,6 +143,9 @@ class dlc_table_maker:
                                 print("Invalid entry!")
                     except ValueError:
                         print("Invalid entry!")
+            while 'item_sort_id' not in pkg_details.keys():
+                pkg_details['item_sort_id'] = self.random_number + {3:0, 4:3000, 5:10000}[self.dlc_details['game_type']]
+                self.random_number += 1
             while 'item_name' not in pkg_details.keys() or pkg_details['item_name'] == '':
                 pkg_details['item_name'] = str(input("Item Name for {0}: ".format(packages[i]))).encode('utf-8').decode('utf-8')
             while 'item_desc' not in pkg_details.keys() or pkg_details['item_desc'] == '':
@@ -173,15 +180,15 @@ class dlc_table_maker:
             item_tbl_entry += struct.pack("<3h", 48, 0, self.packages[pkg_name]['item_type'])
             item_tbl_entry += struct.pack("<64hb", *[0]*65)
             # The first two numbers are constant and same as CS4, the second two seem random, maybe sorting or a timestamp?
-            item_tbl_entry += struct.pack("<4h", 99, 0, 12021, 32)
+            item_tbl_entry += struct.pack("<4h", 99, 0, self.packages[pkg_name]['item_sort_id'], 32)
         elif self.dlc_details['game_type'] == 3: #CS3
             item_tbl_entry += struct.pack("<2h", 48, self.packages[pkg_name]['item_type'])
             item_tbl_entry += struct.pack("<60h", *[0]*60)
-            item_tbl_entry += struct.pack("<bhh", 99, 2000, 0) # Second number is sort, third number may also be sort?
+            item_tbl_entry += struct.pack("<bhh", 99, self.packages[pkg_name]['item_sort_id'], 0) # Second number is sort, third number may also be sort?
         else: #Defaults to Cold Steel IV
             item_tbl_entry += struct.pack("<3h", 48, 0, self.packages[pkg_name]['item_type'])
             item_tbl_entry += struct.pack("<70h", *[0]*70)
-            item_tbl_entry += struct.pack("<3h", 99, 5005, self.dlc_details['dlc_id'])
+            item_tbl_entry += struct.pack("<3h", 99, self.packages[pkg_name]['item_sort_id'], self.dlc_details['dlc_id'])
         item_tbl_entry += self.packages[pkg_name]['item_name'].encode('utf-8') + b'\x00'
         item_tbl_entry += self.packages[pkg_name]['item_desc'].encode('utf-8') + b'\x00'
         if self.dlc_details['game_type'] == 5: #NISA Reverie
@@ -202,7 +209,7 @@ class dlc_table_maker:
         return(b'AttachTableData\x00' + struct.pack("<h",len(attach_tbl_entry)) + attach_tbl_entry)
 
     def make_dlc_entry (self):
-        dlc_tbl_entry = struct.pack("<2h", self.dlc_details['dlc_id'], 5008) # I think the second number has something to do with sorting?
+        dlc_tbl_entry = struct.pack("<2h", self.dlc_details['dlc_id'], self.dlc_details['dlc_sort_id'])
         if self.dlc_details['game_type'] == 3: #CS3
             dlc_tbl_entry += struct.pack("<2h", *[0]*2)
         else: #Defaults to Cold Steel IV / Reverie
