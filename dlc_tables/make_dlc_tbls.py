@@ -169,63 +169,63 @@ class dlc_table_maker:
     def make_tbl_header (self, item_count, name, second_name = ''):
         if len(second_name) > 0:
             #CS3 requires both item and item_q in every item table for some reason, even if there is no item_q
-            return(struct.pack("<hi", item_count, 2) + name.encode() + b'\x00' + struct.pack("<i", item_count)\
-                 + second_name.encode() + b'\x00' + struct.pack("<i", 0)) #Second quantity set to 0
+            return(struct.pack("<HI", item_count, 2) + name.encode() + b'\x00' + struct.pack("<I", item_count)\
+                 + second_name.encode() + b'\x00' + struct.pack("<I", 0)) #Second quantity set to 0
         else:
-            return(struct.pack("<hi", item_count, 1) + name.encode() + b'\x00' + struct.pack("<i", item_count))
+            return(struct.pack("<HI", item_count, 1) + name.encode() + b'\x00' + struct.pack("<I", item_count))
 
     def make_item_entry (self, pkg_name):
-        item_tbl_entry = struct.pack("<2h", self.packages[pkg_name]['item_id'], self.packages[pkg_name]['chr_id'])
+        item_tbl_entry = struct.pack("<2H", self.packages[pkg_name]['item_id'], self.packages[pkg_name]['chr_id'])
         if self.dlc_details['game_type'] == 5: #NISA Reverie
-            item_tbl_entry += struct.pack("<3h", 48, 0, self.packages[pkg_name]['item_type'])
-            item_tbl_entry += struct.pack("<64hb", *[0]*65)
+            item_tbl_entry += struct.pack("<3H", 48, 0, self.packages[pkg_name]['item_type'])
+            item_tbl_entry += struct.pack("<64HB", *[0]*65)
             # The first two numbers are constant and same as CS4, the second two seem random, maybe sorting or a timestamp?
-            item_tbl_entry += struct.pack("<4h", 99, 0, self.packages[pkg_name]['item_sort_id'], 32)
+            item_tbl_entry += struct.pack("<4H", 99, 0, self.packages[pkg_name]['item_sort_id'], 32)
         elif self.dlc_details['game_type'] == 3: #CS3
-            item_tbl_entry += struct.pack("<2h", 48, self.packages[pkg_name]['item_type'])
-            item_tbl_entry += struct.pack("<60h", *[0]*60)
-            item_tbl_entry += struct.pack("<bhh", 99, self.packages[pkg_name]['item_sort_id'], 0) # Second number is sort, third number may also be sort?
+            item_tbl_entry += struct.pack("<2H", 48, self.packages[pkg_name]['item_type'])
+            item_tbl_entry += struct.pack("<60H", *[0]*60)
+            item_tbl_entry += struct.pack("<BHH", 99, self.packages[pkg_name]['item_sort_id'], 0) # Second number is sort, third number may also be sort?
         else: #Defaults to Cold Steel IV
-            item_tbl_entry += struct.pack("<3h", 48, 0, self.packages[pkg_name]['item_type'])
-            item_tbl_entry += struct.pack("<70h", *[0]*70)
-            item_tbl_entry += struct.pack("<3h", 99, self.packages[pkg_name]['item_sort_id'], self.dlc_details['dlc_id'])
+            item_tbl_entry += struct.pack("<3H", 48, 0, self.packages[pkg_name]['item_type'])
+            item_tbl_entry += struct.pack("<70H", *[0]*70)
+            item_tbl_entry += struct.pack("<3H", 99, self.packages[pkg_name]['item_sort_id'], self.dlc_details['dlc_id'])
         item_tbl_entry += self.packages[pkg_name]['item_name'].encode('utf-8') + b'\x00'
         item_tbl_entry += self.packages[pkg_name]['item_desc'].encode('utf-8') + b'\x00'
         if self.dlc_details['game_type'] == 5: #NISA Reverie
             pass
         else: #Defaults to Cold Steel III/IV
-            item_tbl_entry += struct.pack("<2i", 0, 0)
-        return(b'item\x00' + struct.pack("<h",len(item_tbl_entry)) + item_tbl_entry)
+            item_tbl_entry += struct.pack("<2I", 0, 0)
+        return(b'item\x00' + struct.pack("<H",len(item_tbl_entry)) + item_tbl_entry)
 
     def make_attach_entry (self, pkg_name):
-        attach_tbl_entry = struct.pack("<3hi", self.packages[pkg_name]['chr_id'],\
+        attach_tbl_entry = struct.pack("<3HI", self.packages[pkg_name]['chr_id'],\
             {193:5, 194:67, 195: 9}[self.packages[pkg_name]['item_type']], 0, self.packages[pkg_name]['item_id'])
         if self.dlc_details['game_type'] == 3: #CS3
-            attach_tbl_entry += struct.pack("<6h", *[0]*6)
+            attach_tbl_entry += struct.pack("<6H", *[0]*6)
         else: #Defaults to Cold Steel IV / Reverie
-            attach_tbl_entry += struct.pack("<4ih", 0, 0, 0, -1, 48)
+            attach_tbl_entry += struct.pack("<4IH", 0, 0, 0, 0xFFFF, 48)
         attach_tbl_entry += pkg_name.split('.')[0].encode() + b'\x00' #Split is to remove the .pkg
         attach_tbl_entry += self.packages[pkg_name]['attach_point'].encode() + b'\x00'
-        return(b'AttachTableData\x00' + struct.pack("<h",len(attach_tbl_entry)) + attach_tbl_entry)
+        return(b'AttachTableData\x00' + struct.pack("<H",len(attach_tbl_entry)) + attach_tbl_entry)
 
     def make_dlc_entry (self):
-        dlc_tbl_entry = struct.pack("<2h", self.dlc_details['dlc_id'], self.dlc_details['dlc_sort_id'])
+        dlc_tbl_entry = struct.pack("<2H", self.dlc_details['dlc_id'], self.dlc_details['dlc_sort_id'])
         if self.dlc_details['game_type'] == 3: #CS3
-            dlc_tbl_entry += struct.pack("<2h", *[0]*2)
+            dlc_tbl_entry += struct.pack("<2H", *[0]*2)
         else: #Defaults to Cold Steel IV / Reverie
-            dlc_tbl_entry += struct.pack("<8h", *[0]*8)
+            dlc_tbl_entry += struct.pack("<8H", *[0]*8)
         dlc_tbl_entry += self.dlc_details['dlc_name'].encode('utf-8') + b'\x00'
         dlc_tbl_entry += self.dlc_details['dlc_desc'].encode('utf-8') + b'\x00'
         items_added = []
         for i in range(len(self.package_list)):
             if self.packages[self.package_list[i]]['item_id'] not in items_added:
-                dlc_tbl_entry += struct.pack("<2h", self.packages[self.package_list[i]]['item_id'],\
+                dlc_tbl_entry += struct.pack("<2H", self.packages[self.package_list[i]]['item_id'],\
                     self.packages[self.package_list[i]]['item_quantity']) # Second number is quantity
                 items_added.append(self.packages[self.package_list[i]]['item_id'])
         if 20 - len(items_added) > 0:
             for i in range(20 - len(items_added)):
-                dlc_tbl_entry += struct.pack("<2h", 9999, 0)
-        return(b'dlc\x00' + struct.pack("<h",len(dlc_tbl_entry)) + dlc_tbl_entry)
+                dlc_tbl_entry += struct.pack("<2H", 9999, 0)
+        return(b'dlc\x00' + struct.pack("<H",len(dlc_tbl_entry)) + dlc_tbl_entry)
 
     def make_item_tbl (self, write_table = True):
         items_added = []
