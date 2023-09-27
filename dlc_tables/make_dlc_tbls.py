@@ -73,7 +73,10 @@ class dlc_table_maker:
 
     def get_chr_id (self, pkg_name):
         try:
-            return(self.name_dict["_".join(pkg_name.split("_")[0:2])]['chr_id'])
+            base_name = "_".join(pkg_name.split("_")[0:2])
+            if base_name[:2] == 'FC':
+                base_name = base_name[1:]
+            return(self.name_dict[base_name]['chr_id'])
         except KeyError:
             return 0x1FFFFFFF # This number is meaningless, just used to catch errors
 
@@ -103,7 +106,7 @@ class dlc_table_maker:
                     if pkg_details['item_id'] in list(existing_items.keys()):
                         pkg_details['item_type'] = existing_items[pkg_details['item_id']]['item_type']
                         pkg_details['item_quantity'] = existing_items[pkg_details['item_id']]['item_quantity']
-                        pkg_details['chr_id'] = existing_items[pkg_details['item_id']]['chr_id']
+                        #pkg_details['chr_id'] = existing_items[pkg_details['item_id']]['chr_id']
                         pkg_details['item_name'] = existing_items[pkg_details['item_id']]['item_name']
                         pkg_details['item_desc'] = existing_items[pkg_details['item_id']]['item_desc']
                 except ValueError:
@@ -127,18 +130,39 @@ class dlc_table_maker:
             while 'chr_id' not in pkg_details.keys() or pkg_details['chr_id'] == 0x1FFFFFFF:
                 pkg_details['chr_id'] = self.get_chr_id(packages[i])
                 if pkg_details['chr_id'] == 0x1FFFFFFF: #Non-costume
-                    print("Please choose a character for {0}: ".format(packages[i]))
+                    print("Item Select Character Restriction: Please choose a character for {0}: ".format(packages[i]))
                     print("-1. Any character")
                     for j in range(len(unique_chars)):
                         print("{0}. {1}".format(unique_chars[j], self.get_chr_name(unique_chars[j])))
-                    print("(Any number <200 is accepted, see {0} for other options)".format({3:'ed83nisa.csv', 4:'ed84nisa.csv', 5:'ed85nisa.csv'}[self.dlc_details['game_type']]))
+                    print("(Any number <65536 is accepted, see {0} for other options)".format({3:'ed83nisa.csv', 4:'ed84nisa.csv', 5:'ed85nisa.csv'}[self.dlc_details['game_type']]))
                     chr_id_raw = input("Character restriction for {0}: ".format(packages[i]))
                     try:
                         if int(chr_id_raw) == -1:
                             pkg_details['chr_id'] = 0xFFFF
                         else:
-                            if int(chr_id_raw) < 200:
+                            if int(chr_id_raw) < 0x10000:
                                 pkg_details['chr_id'] = int(chr_id_raw)
+                            else:
+                                print("Invalid entry!")
+                    except ValueError:
+                        print("Invalid entry!")
+            if pkg_details['chr_id'] < 1000 and 'chr_id_a' not in pkg_details:
+                pkg_details['chr_id_a'] = pkg_details['chr_id']
+            while 'chr_id_a' not in pkg_details.keys() or pkg_details['chr_id_a'] == 0x1FFFFFFF:
+                pkg_details['chr_id_a'] = self.get_chr_id(packages[i])
+                if pkg_details['chr_id_a'] == 0x1FFFFFFF: #Non-costume
+                    print("Attachment Character Restriction: Please choose a character for {0}: ".format(packages[i]))
+                    print("-1. Any character")
+                    for j in range(len(unique_chars)):
+                        print("{0}. {1}".format(unique_chars[j], self.get_chr_name(unique_chars[j])))
+                    print("(Any number <65536 is accepted, see {0} for other options)".format({3:'ed83nisa.csv', 4:'ed84nisa.csv', 5:'ed85nisa.csv'}[self.dlc_details['game_type']]))
+                    chr_id_raw = input("Character restriction for {0}: ".format(packages[i]))
+                    try:
+                        if int(chr_id_raw) == -1:
+                            pkg_details['chr_id_a'] = 0xFFFF
+                        else:
+                            if int(chr_id_raw) < 0x10000:
+                                pkg_details['chr_id_a'] = int(chr_id_raw)
                             else:
                                 print("Invalid entry!")
                     except ValueError:
@@ -198,12 +222,12 @@ class dlc_table_maker:
         return(b'item\x00' + struct.pack("<H",len(item_tbl_entry)) + item_tbl_entry)
 
     def make_attach_entry (self, pkg_name):
-        attach_tbl_entry = struct.pack("<3HI", self.packages[pkg_name]['chr_id'],\
+        attach_tbl_entry = struct.pack("<3HI", self.packages[pkg_name]['chr_id_a'],\
             {193:5, 194:67, 195: 9}[self.packages[pkg_name]['item_type']], 0, self.packages[pkg_name]['item_id'])
         if self.dlc_details['game_type'] == 3: #CS3
             attach_tbl_entry += struct.pack("<6H", *[0]*6)
         else: #Defaults to Cold Steel IV / Reverie
-            attach_tbl_entry += struct.pack("<4IH", 0, 0, 0, 0xFFFF, 48)
+            attach_tbl_entry += struct.pack("<4IH", 0, 0, 0, 0, 48)
         attach_tbl_entry += pkg_name.split('.')[0].encode() + b'\x00' #Split is to remove the .pkg
         attach_tbl_entry += self.packages[pkg_name]['attach_point'].encode() + b'\x00'
         return(b'AttachTableData\x00' + struct.pack("<H",len(attach_tbl_entry)) + attach_tbl_entry)
