@@ -111,17 +111,35 @@ class dlc_table_maker:
                         pkg_details['item_desc'] = existing_items[pkg_details['item_id']]['item_desc']
                 except ValueError:
                     print("Invalid entry!")
-            while 'item_type' not in pkg_details.keys() or pkg_details['item_type'] not in [193,194,195]:
-                item_type_raw = input("Item type for {0}: [193=costume, 194=attachment, 195=hair color, leave blank for 193] ".format(packages[i]))
+            while 'item_type' not in pkg_details.keys() or pkg_details['item_type'] not in [193,194,195,454]:
+                print("Item type: [193=costume, 194=attachment, 195=hair color, 454=ARCUS cover, leave blank for 193]")
+                item_type_raw = input("Item type for {0}: ".format(packages[i]))
                 if item_type_raw == '':
+                    print("No entry given, setting item type to default of 193.")
                     pkg_details['item_type'] = 193
                 else:
                     try:
                         pkg_details['item_type'] = int(item_type_raw)
-                        if pkg_details['item_type'] not in [193,194,195]:
+                        if pkg_details['item_type'] not in [193,194,195,454]:
                             print("Invalid entry!")
+                        if pkg_details['item_type'] == 454:
+                            if len(packages[i].split('I_3D_ARC_C')) > 1:
+                                try:
+                                    pkg_details['target_type'] = int(packages[i].split('I_3D_ARC_C')[1].split('.')[0])
+                                    if not pkg_details['target_type'] in range(256):
+                                        print("Item type 454 was specified, but xxx in I_3D_ARC_Cxxx.pkg must be between 000 and 255!")
+                                        pkg_details['item_type'] = 0
+                                        pkg_details['target_type'] = 0
+                                except ValueError:
+                                    print("Item type 454 was specified, but the pkg name must be I_3D_ARC_Cxxx.pkg!")
+                                    pkg_details['item_type'] = 0
+                            else:
+                                print("Item type 454 was specified, but the pkg name must be I_3D_ARC_Cxxx.pkg!")
+                                pkg_details['item_type'] = 0
                     except ValueError:
                         print("Invalid entry!")
+            while 'target_type' not in pkg_details.keys() or pkg_details['target_type'] == '':
+                pkg_details['target_type'] = 0
             while 'attach_point' not in pkg_details.keys() or pkg_details['attach_point'] == '':
                 if pkg_details['item_type'] == 194:
                     pkg_details['attach_point'] = str(input("Attach point for {0}: (e.g. head_point - check .inf file for valid options)  ".format(packages[i]))).encode('utf-8').decode('utf-8')
@@ -204,16 +222,22 @@ class dlc_table_maker:
         item_tbl_entry = struct.pack("<2H", self.packages[pkg_name]['item_id'], self.packages[pkg_name]['chr_id'])
         if self.dlc_details['game_type'] == 5: #NISA Reverie
             item_tbl_entry += struct.pack("<3H", 48, 0, self.packages[pkg_name]['item_type'])
-            item_tbl_entry += struct.pack("<64HB", *[0]*65)
+            item_tbl_entry += struct.pack("<B4H", *[0]*5)
+            item_tbl_entry += struct.pack("<B", self.packages[pkg_name]['target_type'])
+            item_tbl_entry += struct.pack("<B59H", *[0]*60)
             # The first two numbers are constant and same as CS4, the second two seem random, maybe sorting or a timestamp?
             item_tbl_entry += struct.pack("<4H", 99, 0, self.packages[pkg_name]['item_sort_id'], 32)
         elif self.dlc_details['game_type'] == 3: #CS3
             item_tbl_entry += struct.pack("<2H", 48, self.packages[pkg_name]['item_type'])
-            item_tbl_entry += struct.pack("<60H", *[0]*60)
+            item_tbl_entry += struct.pack("<4H", *[0]*4)
+            item_tbl_entry += struct.pack("<B", self.packages[pkg_name]['target_type'])
+            item_tbl_entry += struct.pack("<B55H", *[0]*56)
             item_tbl_entry += struct.pack("<BHH", 99, self.packages[pkg_name]['item_sort_id'], 0) # Second number is sort, third number may also be sort?
         else: #Defaults to Cold Steel IV
             item_tbl_entry += struct.pack("<3H", 48, 0, self.packages[pkg_name]['item_type'])
-            item_tbl_entry += struct.pack("<70H", *[0]*70)
+            item_tbl_entry += struct.pack("<4H", *[0]*4)
+            item_tbl_entry += struct.pack("<B", self.packages[pkg_name]['target_type'])
+            item_tbl_entry += struct.pack("<B65H", *[0]*66)
             item_tbl_entry += struct.pack("<3H", 99, self.packages[pkg_name]['item_sort_id'], self.dlc_details['dlc_id'])
         item_tbl_entry += self.packages[pkg_name]['item_name'].encode('utf-8') + b'\x00'
         item_tbl_entry += self.packages[pkg_name]['item_desc'].encode('utf-8') + b'\x00'
@@ -225,7 +249,7 @@ class dlc_table_maker:
 
     def make_attach_entry (self, pkg_name):
         attach_tbl_entry = struct.pack("<3HI", self.packages[pkg_name]['chr_id_a'],\
-            {193:5, 194:67, 195: 9}[self.packages[pkg_name]['item_type']], 0, self.packages[pkg_name]['item_id'])
+            {193:5, 194:67, 195: 9, 454: 5}[self.packages[pkg_name]['item_type']], 0, self.packages[pkg_name]['item_id'])
         if self.dlc_details['game_type'] == 3: #CS3
             attach_tbl_entry += struct.pack("<6H", *[0]*6)
         else: #Defaults to Cold Steel IV / Reverie
