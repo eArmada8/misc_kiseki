@@ -194,6 +194,8 @@ class dlc_table_maker:
                 pkg_details['item_desc'] = str(input("Item Description for {0}: ".format(packages[i]))).encode('utf-8').decode('utf-8')
             while 'item_cs4rev_scraft_cutin' not in pkg_details.keys() or pkg_details['item_cs4rev_scraft_cutin'] == '':
                 pkg_details['item_cs4rev_scraft_cutin'] = 0
+            while 'rev_voice_flag' not in pkg_details.keys() or pkg_details['rev_voice_flag'] == '':
+                pkg_details['rev_voice_flag'] = 0
             while 'item_quantity' not in pkg_details.keys():
                 item_quant_raw = input("How many should be included in the DLC? [Leave blank for 1] ".format(packages[i]))
                 if item_quant_raw == '':
@@ -253,7 +255,8 @@ class dlc_table_maker:
         if self.dlc_details['game_type'] == 3: #CS3
             attach_tbl_entry += struct.pack("<6H", *[0]*6)
         else: #Defaults to Cold Steel IV / Reverie
-            attach_tbl_entry += struct.pack("<4iH", 0, 0, 0, self.packages[pkg_name]['item_cs4rev_scraft_cutin'], 48)
+            voice_flag = self.packages[pkg_name]['rev_voice_flag'] if self.dlc_details['game_type'] == 5 else 0
+            attach_tbl_entry += struct.pack("<4iH", 0, 0, voice_flag, self.packages[pkg_name]['item_cs4rev_scraft_cutin'], 48)
         attach_tbl_entry += pkg_name.split('.')[0].encode() + b'\x00' #Split is to remove the .pkg
         attach_tbl_entry += self.packages[pkg_name]['attach_point'].encode() + b'\x00'
         return(b'AttachTableData\x00' + struct.pack("<H",len(attach_tbl_entry)) + attach_tbl_entry)
