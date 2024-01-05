@@ -34,22 +34,34 @@ def read_bgm_tbl(table_filename = 't_bgm.tbl'):
                 'num_items': struct.unpack("<i", f.read(4))[0]}
             section_data.append(section)
         bgm_table = []
+        game_ver = 0 # 0 - uninitialized, 1 - CS1/2/3, 2 - CS4/5
         for i in range(len(section_data)): # Should always be 1, every entry 'bgm'
             for j in range(section_data[i]['num_items']):
                 entry_type = read_null_terminated_string(f)
-                offset = f.tell()
                 block_size, = struct.unpack("<h", f.read(2))
+                offset = f.tell()
                 if entry_type == 'bgm':
                     bgm_entry = {}
                     bgm_entry['id'], = struct.unpack("<h", f.read(2))
                     bgm_entry['track'] = read_null_terminated_string(f)
-                    bgm_entry['unk'] = struct.unpack("<3h", f.read(6))
+                    if game_ver == 0:
+                        if f.tell() == offset + block_size - 2:
+                            game_ver = 1
+                        elif f.tell() == offset + block_size - 6:
+                            game_ver = 2
+                        else:
+                            input("Unexpected table block length!  Press Enter to abort.")
+                            raise
+                    if game_ver == 1:
+                        bgm_entry['unk'], = struct.unpack("<h", f.read(2))
+                    elif game_ver == 2:
+                        bgm_entry['unk'] = struct.unpack("<3h", f.read(6))
                     bgm_table.append(bgm_entry)
                 else:
                     f.seek(block_size,1)
-    return(bgm_table)
+    return(bgm_table, game_ver)
 
-def write_bgm_tbl(bgm_table, table_filename = 't_bgm.tbl'):
+def write_bgm_tbl(bgm_table, table_filename = 't_bgm.tbl', game_ver = 1):
     def nullstr (text):
         return (text.encode('utf-8') + b'\x00')
     table_data = struct.pack("<hi", len(bgm_table), 1)
@@ -57,7 +69,10 @@ def write_bgm_tbl(bgm_table, table_filename = 't_bgm.tbl'):
     for i in range(len(bgm_table)):
         block_data = struct.pack("<h", bgm_table[i]['id'])
         block_data += nullstr(bgm_table[i]['track'])
-        block_data += struct.pack("<3h", *bgm_table[i]['unk'])
+        if game_ver == 1:
+            block_data += struct.pack("<h", bgm_table[i]['unk'])
+        else: #game_ver == 2
+            block_data += struct.pack("<3h", *bgm_table[i]['unk'])
         table_data += nullstr('bgm') + struct.pack("<h", len(block_data)) + block_data
     with open(table_filename,'wb') as f:
         f.write(table_data)
@@ -83,9 +98,9 @@ def process_tbl(table_filename = 't_bgm.tbl', random_db_filename = 't_bgm_option
         shutil.copy2(table_filename, table_filename + '.original')
     # Read the randomizer options
     random_db = read_struct_from_json(random_db_filename)
-    bgm_table = read_bgm_tbl(table_filename)
+    bgm_table, game_ver = read_bgm_tbl(table_filename)
     bgm_table = randomize_bgms(bgm_table, random_db)
-    write_bgm_tbl(bgm_table, table_filename)
+    write_bgm_tbl(bgm_table, table_filename, game_ver)
 
 if __name__ == "__main__":
     # Set current directory

@@ -1,0 +1,67 @@
+[
+    {
+        "name": "TRC Lobby",
+        "id": 100,
+        "options": [
+            "ed81009",
+            "ed8150",
+            "ed8151"
+        ]
+    },
+    {
+        "name": "TRC Level",
+        "id": 101,
+        "options": [
+            "ed81201",
+			"ed8368",
+            "ed8369"
+        ]
+    },
+    {
+        "name": "TRC Regular Battle",
+        "id": 125,
+        "options": [
+            "ed82170",
+            "ed8452",
+            "ed8453",
+			"ed8455"
+        ]
+    },
+    {
+        "name": "TRC Formidable Foe",
+        "id": 2061,
+        "options": [
+            "ed82159",
+			"ed8402",
+            "ed8450",
+            "ed8451"
+        ]
+    },
+    {
+        "name": "TRC Boss Room",
+        "id": 102,
+        "options": [
+            "ed81010",
+            "ed8461",
+            "ed8464"
+        ]
+    },
+    {
+        "name": "TRC Mid-Boss Fight",
+        "id": 2088,
+        "options": [
+            "ed82186",
+            "ed8429",
+            "ed8453"
+        ]
+    }
+    {
+        "name": "TRC Boss Fight",
+        "id": 2076,
+        "options": [
+            "ed82174",
+            "ed8429",
+            "ed8453"
+        ]
+    }
+]
