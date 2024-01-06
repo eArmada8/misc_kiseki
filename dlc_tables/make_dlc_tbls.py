@@ -87,7 +87,7 @@ class dlc_table_maker:
             return ''
 
     def get_pkg_details (self):
-        packages = glob.glob('*.pkg')
+        packages = list(set([x.split('.json')[0] for x in glob.glob('*.pkg*')]))
         unique_chars = list(set([self.get_chr_id(x) for x in packages if self.get_chr_id(x) != 0x1FFFFFFF]))
         existing_items = self.get_items_from_jsons()
         pkg_dict = {}
