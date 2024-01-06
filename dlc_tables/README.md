@@ -29,7 +29,7 @@ Questions it will ask you:
 	4. DLC Description:  The description of the DLC that the user will see in the DLC menu
 * Item options:
 	1. Item ID: This number should be unique and not already used by the game.  For attachments, if you want to group two or more attachments together (for example halo and angel wings), give them the same ID number.  The script will copy over the remaining information, except the attach point.
-	2. Item Type: Enter 193 for costume, 194 for attachment or 195 for hair color.  Other types are not currently supported.
+	2. Item Type: Enter 193 for costume, 194 for attachment, 195 for hair color or 454 for ARCUS cover.  Other types are not currently supported.
 	3. Attach point: This field only appears for attachments.  The attach point should be in the .inf file for the costumes it supports.  Some example attach points include head_point, R_hand_point, DLC_point1, etc.
 	4. Character ID: Please look in the t_name.tbl CSV files provided, or choose from the list the script gives you.  The script will look for any costume files in the folder and give those characters as options, but you can choose any ID under 200.  For example, Rean is 0, Alisa is 1, and so on.  Please note that this number is NOT the same as the C_CHRxxx number.  (For example, Juna's character ID is 10, even though her model is C_CHR011.  Please look in the CSV.)
 	5. Item Name:  The name of the item that the user will see in the item / costume menus
