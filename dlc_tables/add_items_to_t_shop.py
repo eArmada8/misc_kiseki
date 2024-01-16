@@ -47,7 +47,7 @@ def read_items():
     return([{'shop_id': int(x.replace('\\','/').split('/')[0]), 'item_id': read_json_for_item_id(x)} for x in new_items_json_list])
 
 def build_shop_item(shop_id, item_id):
-    entry = struct.pack('<4H', shop_id, item_id, 9999, 0)
+    entry = struct.pack('<4H', shop_id, item_id, 0, 0)
     entry += struct.pack('<B4H', 0, 0, 0, 65535, 0)
     return({'type':'ShopItem','data':entry})
 
