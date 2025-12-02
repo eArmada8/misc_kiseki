@@ -23,7 +23,10 @@ def processCLE (f):
     f.seek(0)
     magic, size = struct.unpack('<2I', f.read(8))
     if (magic == to_decrypt):
-        return(b"".join(cipher.decrypt_ecb(f.read((size//8)*8))))
+        unc_data = bytearray()
+        unc_data.extend(b"".join(cipher.decrypt_ecb(f.read((size//8)*8))))
+        unc_data.extend(f.read())
+        return(unc_data)
     else:
         return False
 
